@@ -73,39 +73,53 @@ then build some logic to decide when to ask
 
 ```mermaid
 graph TD
-  A[Source: Slack] --> B[Callback Service]
+  %% Sources
+  A[Source: Slack] --> B[Analyzer]
   A2[Source: WhatsApp] --> B
   A3[Source: Teams] --> B
   A4[Source: Outlook] --> B
+
+  %% Analyzer processes all incoming messages
   B --> C[Storage: All Messages]
   C --> D[Analysis with Cheap LLM]
   D --> E{Action Required?}
-  
-  E -- Yes --> F[Specialized Agents]
+
+  %% Action Required decision
+  E -- Yes --> F[Agent Router]
   E -- No --> C
-  
-  F --> PR[PR Reviewer: Check GitHub PR & Approve if OK]
+
+  %% Agent Router sends to specialized agents
+  F --> PR[PR Reviewer: GitHub PR Check]
   F --> Doc[Documentation Lookup]
   F --> Social[Social Media Response]
   F --> Email[Check Incoming Emails]
 
-  Email --> D2[Cheap LLM (Email Processing)]
+  %% Email handling process
+  Email --> D2[Cheap LLM Email Processing]
   D2 --> E2{Action Required?}
   
   E2 -- Yes --> Agt[Select Agent]
   E2 -- No --> Archive[Archive Email]
 
+  %% Select agent and perform actions
   Agt -->|Response| Resp[Send Response]
   Agt -->|Archive| Archive[Archive Email]
   Agt -->|Delete| Delete[Delete Email]
-  Agt -->|Alert| SlackAlert[Alert via Slack (if Important)]
+  Agt -->|Alert| SlackAlert[Alert via Slack if Important]
 
-  ResumeAgent[Resume Agent] --> Report[Generate Daily Report of Interactions]
-  
-  %% Connections for other actions
-  SlackAlert --> A[Source: Slack]
+  %% PR, Documentation, and Social are sent back to storage
   PR --> C
   Doc --> C
   Social --> C
+
+  %% Optional alert back to Slack when important
+  SlackAlert --> A[Source: Slack]
+
+  %% Daily Report generation
+  ResumeAgent[Resume Agent] --> Report[Generate Daily Report of Interactions]
+  
+  %% Optional interactions flow
   Resp --> Archive
+  Archive --> C
+
 ```
