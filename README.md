@@ -71,7 +71,8 @@ then build some logic to decide when to ask
 
 ## Design
 
-```mermaidgraph TD
+```mermaid
+graph TD
   A[Source: Slack] --> B[Callback Service]
   A2[Source: WhatsApp] --> B
   A3[Source: Teams] --> B
