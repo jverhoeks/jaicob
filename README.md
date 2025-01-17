@@ -79,14 +79,14 @@ graph TD
   A3[Source: Teams] --> B
   A4[Source: Outlook] --> B
 
-  %% Analyzer processes all incoming messages
-  B --> C[Storage: All Messages]
+  B["Receiver"] --> C[Storage: All Messages]
   C --> D[Analysis with Cheap LLM]
   D --> E{Action Required?}
 
   %% Action Required decision
   E -- Yes --> F[Agent Router]
-  E -- No --> C
+  E
+  C
 
   %% Agent Router sends to specialized agents
   F --> PR[PR Reviewer: GitHub PR Check]
@@ -97,29 +97,61 @@ graph TD
   %% Email handling process
   Email --> D2[Cheap LLM Email Processing]
   D2 --> E2{Action Required?}
-  
   E2 -- Yes --> Agt[Select Agent]
-  E2 -- No --> Archive[Archive Email]
+  E2
+  Archive[Archive Email]
 
   %% Select agent and perform actions
   Agt -->|Response| Resp[Send Response]
-  Agt -->|Archive| Archive[Archive Email]
   Agt -->|Delete| Delete[Delete Email]
   Agt -->|Alert| SlackAlert[Alert via Slack if Important]
+  Agt --> Archive[Archive Email]
 
-  %% PR, Documentation, and Social are sent back to storage
-  PR --> C
-  Doc --> C
-  Social --> C
+  %% PR Review Process
+  PR --> n2["Get PR data"]
+  n2 --> n3["LLM: Analyze code and text"]
+  n3 --> n4["Approve PR with comment"]
+  n3 --> n5["Reject PR with comment"]
+  n3 --> n6@{ shape: "stadium", label: "Ignore" }
+  n4 --> n7["Respond in Slack"]
+  n5 --> n7
+  n6
+  n7
+
+  %% Documentation Lookup Process
+  Doc --> n8["LLM: Analyze question"]
+  n8 --> n9["Respond in Slack"]
+  n8 --> n10@{ shape: "stadium", label: "Ignore" }
 
   %% Optional alert back to Slack when important
-  SlackAlert --> A[Source: Slack]
+  SlackAlert
+  A[Source: Slack]
 
   %% Daily Report generation
   ResumeAgent[Resume Agent] --> Report[Generate Daily Report of Interactions]
-  
-  %% Optional interactions flow
-  Resp --> Archive
-  Archive --> C
 
+  %% Optional interactions flow
+  Resp
+  C
+  Archive
+  C
+  Delete
+  C
+  SlackAlert
+  C
+
+  %% Event Logging
+  C --> ResumeAgent["Overview Agent"]
+  %% Storage connections
+  style D2 fill:#FF3131, color:#000000
+  style D fill:#FF3131
+  style ResumeAgent fill:#FF5757
+  style C fill:#7ED957
+	E ---|"No"| n11@{ shape: "stadium", label: "Ignore" }
+	E2 ---|"No"| n12@{ shape: "stadium", label: "Ignore" }
+	style n6 fill:#FFBD59
+	style n12 fill:#FFDE59
+	style n10 fill:#FFDE59
+	style n11 fill:#FFDE59
+	n5 --- n13
 ```
